@@ -1,6 +1,7 @@
 package bank
 
 import (
+	"cautious-octo-pancake/internal/bank/storage"
 	"cautious-octo-pancake/pkg/account"
 	"context"
 	"fmt"
@@ -17,13 +18,13 @@ type Bank interface {
 }
 
 type bank struct {
-	repo Storage
-	currency money.Currency
+	repository storage.Repository
+	currency   money.Currency
 }
 
-func NewBank(s Storage) Bank {
+func NewBank(r storage.Repository) Bank {
 	return &bank{
-		repo: s,
+		repository: r,
 	}
 }
 
@@ -42,7 +43,7 @@ func (b *bank) OpenAccount(accountID account.Identifier, initialAmount int64) (a
 }
 
 func (b *bank) GetAccount(accountID account.Identifier) (account.Account, error) {
-	return b.repo.GetAccount(accountID)
+	return b.repository.GetAccount(accountID)
 }
 
 func (b *bank) Transfer(origin, destination account.Account, amount int64) error {
@@ -75,5 +76,5 @@ func (b *bank) AccountWithdraw(origin account.Account, amount int64) error {
 }
 
 func (b *bank) Reset() {
-	b.repo.Reset()
+	b.repository.Reset()
 }
