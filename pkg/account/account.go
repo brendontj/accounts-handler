@@ -8,21 +8,24 @@ import (
 
 var ErrAccountWithoutBalance = errors.New("account without balance")
 
+type Identifier int
+
 type Account interface {
-	ID() int64
+	ID() Identifier
 	Balance() int64
+	Currency() money.Currency
 	Deposit(amount int64) error
 	Withdraw(amount int64) error
 	RollbackBalanceTo(amount int64)
 }
 
 type account struct {
-	id       int64
+	id       Identifier
 	balance  *money.Money
 	currency money.Currency
 }
 
-func NewAccount(destination, amount int64, currency money.Currency) Account {
+func NewAccount(destination Identifier, amount int64, currency money.Currency) Account {
 	return &account{
 		id:       destination,
 		balance:  money.New(amount, currency.Code),
@@ -30,12 +33,16 @@ func NewAccount(destination, amount int64, currency money.Currency) Account {
 	}
 }
 
-func (a *account) ID() int64 {
+func (a *account) ID() Identifier {
 	return a.id
 }
 
 func (a *account) Balance() int64 {
 	return a.balance.Amount()
+}
+
+func (a *account) Currency() money.Currency {
+	return a.currency
 }
 
 func (a *account) Deposit(amount int64) error {

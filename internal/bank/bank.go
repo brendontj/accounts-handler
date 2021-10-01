@@ -8,8 +8,8 @@ import (
 )
 
 type Bank interface {
-	OpenAccount(accountID int64, initialAmount int64) (account.Account, error)
-	GetAccount(accountID int64) (account.Account, error)
+	OpenAccount(accountID account.Identifier, initialAmount int64) (account.Account, error)
+	GetAccount(accountID account.Identifier) (account.Account, error)
 	Transfer(origin, destination account.Account, amount int64) error
 	AccountDeposit(destination account.Account, amount int64) error
 	AccountWithdraw(origin account.Account, amount int64) error
@@ -27,7 +27,7 @@ func NewBank(s Storage) Bank {
 	}
 }
 
-func (b *bank) OpenAccount(accountID int64, initialAmount int64) (account.Account, error) {
+func (b *bank) OpenAccount(accountID account.Identifier, initialAmount int64) (account.Account, error) {
 	_, err := b.GetAccount(accountID)
 	if err != nil {
 		if err != ErrAccountNotFound {
@@ -41,7 +41,7 @@ func (b *bank) OpenAccount(accountID int64, initialAmount int64) (account.Accoun
 	return nil, fmt.Errorf("unable to open account with id %v, cause exists account with id informed", accountID)
 }
 
-func (b *bank) GetAccount(accountID int64) (account.Account, error) {
+func (b *bank) GetAccount(accountID account.Identifier) (account.Account, error) {
 	return b.repo.GetAccount(accountID)
 }
 

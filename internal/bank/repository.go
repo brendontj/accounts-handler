@@ -8,7 +8,7 @@ import (
 type Storage interface {
 	InsertAccount(a account.Account) error
 	GetAccounts() []account.Account
-	GetAccount(id int64) (account.Account, error)
+	GetAccount(id account.Identifier) (account.Account, error)
 	Reset()
 }
 
@@ -34,7 +34,7 @@ func (s *storage) GetAccounts() []account.Account {
 	return s.accounts
 }
 
-func (s *storage) GetAccount(id int64) (account.Account, error) {
+func (s *storage) GetAccount(id account.Identifier) (account.Account, error) {
 	for _, a := range s.accounts {
 		if a.ID() == id {
 			return a, nil
@@ -43,7 +43,7 @@ func (s *storage) GetAccount(id int64) (account.Account, error) {
 	return nil, ErrAccountNotFound
 }
 
-func (s *storage) existAccountWithID(id int64) bool {
+func (s *storage) existAccountWithID(id account.Identifier) bool {
 	for _, a := range s.accounts {
 		if a.ID() == id {
 			return true
