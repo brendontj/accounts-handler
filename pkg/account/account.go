@@ -1,15 +1,19 @@
 package account
 
 import (
+	"errors"
 	"fmt"
 	"github.com/Rhymond/go-money"
 )
+
+var ErrAccountWithoutBalance = errors.New("account without balance")
 
 type Account interface {
 	ID() int64
 	Balance() int64
 	Deposit(amount int64) error
 	Withdraw(amount int64) error
+	RollbackBalanceTo(amount int64)
 }
 
 type account struct {
@@ -62,4 +66,8 @@ func (a *account) Withdraw(amount int64) error {
 
 	a.balance = newMoney
 	return nil
+}
+
+func (a *account) RollbackBalanceTo(amount int64) {
+	a.balance = money.New(amount, a.currency.Code)
 }
