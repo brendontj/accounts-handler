@@ -3,6 +3,7 @@ package memory_storage_test
 import (
 	"cautious-octo-pancake/internal/bank/storage"
 	"cautious-octo-pancake/pkg/account"
+	"fmt"
 	"github.com/Rhymond/go-money"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -25,6 +26,23 @@ func TestInsertAccountInMemoryRepository(t *testing.T) {
 	assert.ObjectsAreEqualValues(expectedAccount, a)
 }
 
+func TestInsertAccountDuplicatedInMemoryRepository(t *testing.T) {
+	t.Parallel()
+
+	s := storage.NewMemoryRepository()
+	currency := *money.GetCurrency("BRL")
+	a1 := account.NewAccount(1, 100, currency)
+	a2 := account.NewAccount(1, 250, currency)
+	err := s.InsertAccount(a1)
+	require.NoError(t, err)
+
+	err = s.InsertAccount(a2)
+
+	assert.NotNil(t, err)
+	assert.EqualError(t, err, fmt.Sprintf("unable to store new account with id %v, cause: exists account " +
+		"with the same id registered", a2.ID()))
+}
+
 func TestGetSpecificAccountByAccountIdentifier(t *testing.T) {
 	t.Parallel()
 
@@ -39,6 +57,18 @@ func TestGetSpecificAccountByAccountIdentifier(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.ObjectsAreEqualValues(expectedAccount, a)
+}
+
+func TestGetAccountAndGetErrorAccountNotFound(t *testing.T) {
+	t.Parallel()
+
+	s := storage.NewMemoryRepository()
+
+	a, err := s.GetAccount(account.Identifier(1))
+
+	require.Nil(t, a)
+	require.NotNil(t, err)
+	require.EqualError(t, err, storage.ErrAccountNotFound.Error())
 }
 
 func TestGetAllAccountsInsertedInMemoryRepository(t *testing.T) {

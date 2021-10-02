@@ -3,8 +3,8 @@ package bank
 import "errors"
 
 const (
-	MinimumDepositAmount = 0
-	MinimumWithdrawAmount = 0
+	MinimumDepositAmount = 1
+	MinimumWithdrawAmount = 1
 )
 
 var (
