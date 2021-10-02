@@ -8,7 +8,6 @@ const (
 )
 
 var (
-	ErrAccountNotFound = errors.New("account not found")
 	ErrAmountLessThanMinimumDepositAmount  = errors.New("amount requested is less than minimum deposit amount")
 	ErrAmountLessThanMinimumWithdrawAmount = errors.New("amount requested is less than minimum withdraw amount")
 )

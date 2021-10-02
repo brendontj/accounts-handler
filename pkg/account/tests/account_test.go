@@ -8,14 +8,14 @@ import (
 	"testing"
 )
 
-func Test_Withdraw_From_An_Account_With_Enough_Amount(t *testing.T) {
+func TestWithdrawFromAnAccountWithEnoughAmount(t *testing.T) {
 	t.Parallel()
 
-	testCurrency := *money.GetCurrency("BRL")
+	testCurrency := *money.GetCurrency(account.BrazilianCurrencyCode)
 
 	type testCase struct {
 		currency money.Currency
-		account account.Account
+		account *account.Account
 		amountToWithdraw int64
 		balanceExpected int64
 	}
@@ -55,25 +55,26 @@ func Test_Withdraw_From_An_Account_With_Enough_Amount(t *testing.T) {
 	}
 }
 
-func Test_Withdraw_From_An_Account_Without_Enough_Amount(t *testing.T) {
+func TestWithdrawFromAnAccountWithoutEnoughAmount(t *testing.T) {
 	t.Parallel()
 
-	testCurrency := *money.GetCurrency("BRL")
+	testCurrency := *money.GetCurrency(account.BrazilianCurrencyCode)
 	a := account.NewAccount(1, 100, testCurrency)
 
 	err := a.Withdraw(200)
+
 	assert.NotNil(t, err)
 	assert.ErrorIs(t, err, account.ErrAccountWithoutBalance)
 }
 
-func Test_Deposit_With_Success(t *testing.T) {
+func TestDepositWithSuccess(t *testing.T) {
 	t.Parallel()
 
-	testCurrency := *money.GetCurrency("BRL")
+	testCurrency := *money.GetCurrency(account.BrazilianCurrencyCode)
 
 	type testCase struct {
 		currency money.Currency
-		account account.Account
+		account *account.Account
 		amountToDeposit int64
 		balanceExpected int64
 	}
@@ -113,10 +114,10 @@ func Test_Deposit_With_Success(t *testing.T) {
 	}
 }
 
-func Test_account_RollbackBalanceTo(t *testing.T) {
+func TestAccountRollbackBalanceTo(t *testing.T) {
 	t.Parallel()
 
-	testCurrency := *money.GetCurrency("BRL")
+	testCurrency := *money.GetCurrency(account.BrazilianCurrencyCode)
 	a := account.NewAccount(1, 200, testCurrency)
 
 	a.RollbackBalanceTo(100)
