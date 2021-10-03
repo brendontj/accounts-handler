@@ -17,6 +17,6 @@ func (a *Application) Start() {
 	a.initializeRoutes()
 }
 
-func (a *Application) Run() {
-	log.Fatal(http.ListenAndServe(":8080", a.Router))
+func (a *Application) Run(addr string) {
+	log.Fatal(http.ListenAndServe(addr, a.Router))
 }

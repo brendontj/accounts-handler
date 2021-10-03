@@ -1,73 +1,41 @@
 package application
 
 import (
+	"cautious-octo-pancake/application/dto"
 	"cautious-octo-pancake/internal/bank/storage"
 	"cautious-octo-pancake/pkg/account"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
 )
 
-type EventDto struct {
-	EventType string `json:"type"`
-	Destination *string `json:"destination,omitempty"`
-	Origin *string `json:"origin,omitempty"`
-	Amount int64 `json:"amount"`
-}
-
-type ResponseDto struct {
-	Destination *AccountResponseDto `json:"destination,omitempty"`
-	Origin *AccountResponseDto `json:"origin,omitempty"`
-}
-
-type AccountResponseDto struct {
-	ID string `json:"id"`
-	Balance int64 `json:"balance"`
-}
-
 func (a *Application) EventHandler(w http.ResponseWriter, r *http.Request){
-	var e EventDto
-	decoder := json.NewDecoder(r.Body)
-	if err := decoder.Decode(&e); err != nil {
-		respondWithError(w, http.StatusBadRequest, "Invalid request payload")
-		return
-	}
 	defer func() {
 		_ = r.Body.Close()
 	}()
 
+	e, done := decodeRequestBody(w, r)
+	if done {
+		return
+	}
+
 	switch e.EventType {
 	case EventTypeDeposit:
-		accountID, err := strconv.Atoi(*e.Destination)
-		if err != nil {
-			respondWithError(w, http.StatusBadRequest, "destination needs to be a number")
+		accountID, done := transformAccountIdentifier(w, e.Destination)
+		if done {
 			return
 		}
 		acc, err := a.Bank.GetAccount(account.Identifier(accountID))
 		if err != nil {
 			if err == storage.ErrAccountNotFound {
-				acc, err = a.Bank.OpenAccount(account.Identifier(accountID), e.Amount)
-				if err != nil {
-					respondWithError(w, http.StatusInternalServerError, "unable to open account")
-					return
-				}
-				respondWithJSON(w, http.StatusCreated, ResponseDto{Destination: &AccountResponseDto{
-					ID:      acc.ID().String(),
-					Balance: acc.Balance(),
-				},
-				Origin: nil})
+				a.openAccountWithInitialBalance(w, accountID, *e)
 				return
 			}
-		}
-		if err := a.Bank.AccountDeposit(acc,e.Amount); err != nil {
-			respondWithError(w, http.StatusInternalServerError, "unable to deposit in the account")
+			respondWithError(w, http.StatusInternalServerError, "Unable to get account with informed identifier")
 			return
 		}
-		respondWithJSON(w, http.StatusCreated, ResponseDto{Destination: &AccountResponseDto{
-			ID:      acc.ID().String(),
-			Balance: acc.Balance(),
-		},
-			Origin: nil})
+		a.accountDeposit(w, acc, *e)
 		return
 
 	case EventTypeTransfer:
@@ -79,5 +47,49 @@ func (a *Application) EventHandler(w http.ResponseWriter, r *http.Request){
 		return
 	}
 
+}
 
+func (a *Application) openAccountWithInitialBalance(w http.ResponseWriter, accountID int, e dto.Event) {
+	openedAccount, err := a.Bank.OpenAccount(account.Identifier(accountID), e.Amount)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "unable to open account")
+		return
+	}
+	respondWithJSON(w, http.StatusCreated, dto.Response{Destination: &dto.AccountResponse{
+		ID:      openedAccount.ID().String(),
+		Balance: openedAccount.Balance(),
+	},
+		Origin: nil})
+	return
+}
+
+func (a *Application) accountDeposit(w http.ResponseWriter, acc *account.Account, e dto.Event) {
+	if err := a.Bank.AccountDeposit(acc, e.Amount); err != nil {
+		respondWithError(w, http.StatusInternalServerError, "unable to deposit in the account")
+		return
+	}
+	respondWithJSON(w, http.StatusCreated, dto.Response{Destination: &dto.AccountResponse{
+		ID:      acc.ID().String(),
+		Balance: acc.Balance(),
+	},
+		Origin: nil})
+}
+
+func transformAccountIdentifier(w http.ResponseWriter, identifier interface {}) (int, bool) {
+	accountID, err := strconv.Atoi(fmt.Sprintf("%v", identifier))
+	if err != nil {
+		respondWithError(w, http.StatusBadRequest, "account identifier needs to be a number")
+		return 0, true
+	}
+	return accountID, false
+}
+
+func decodeRequestBody(w http.ResponseWriter, r *http.Request) (*dto.Event, bool) {
+	var e dto.Event
+	decoder := json.NewDecoder(r.Body)
+	if err := decoder.Decode(&e); err != nil {
+		respondWithError(w, http.StatusBadRequest, "Invalid request payload")
+		return nil, true
+	}
+	return &e, false
 }
