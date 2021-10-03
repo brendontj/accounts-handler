@@ -1,14 +1,14 @@
 package application
 
 import (
-	"cautious-octo-pancake/internal/bank"
+	"cautious-octo-pancake/internal/account_handler"
 	"github.com/gorilla/mux"
 	"log"
 	"net/http"
 )
 
 type Application struct {
-	bank.Bank
+	account_handler.AccountHandler
 	*mux.Router
 }
 

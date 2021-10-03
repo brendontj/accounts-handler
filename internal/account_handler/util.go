@@ -1,4 +1,4 @@
-package bank
+package account_handler
 
 import "errors"
 

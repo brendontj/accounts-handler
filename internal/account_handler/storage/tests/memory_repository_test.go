@@ -1,7 +1,7 @@
 package memory_storage_test
 
 import (
-	"cautious-octo-pancake/internal/bank/storage"
+	"cautious-octo-pancake/internal/account_handler/storage"
 	"cautious-octo-pancake/pkg/account"
 	"fmt"
 	"github.com/Rhymond/go-money"
@@ -14,7 +14,7 @@ func TestInsertAccountInMemoryRepository(t *testing.T) {
 	t.Parallel()
 
 	s := storage.NewMemoryRepository()
-	currency := *money.GetCurrency("BRL")
+	currency := *money.GetCurrency(storage.BrazilianCurrencyCode)
 	a := account.NewAccount(1, 100, currency)
 
 	err := s.InsertAccount(a)
@@ -30,7 +30,7 @@ func TestInsertAccountDuplicatedInMemoryRepository(t *testing.T) {
 	t.Parallel()
 
 	s := storage.NewMemoryRepository()
-	currency := *money.GetCurrency("BRL")
+	currency := *money.GetCurrency(storage.BrazilianCurrencyCode)
 	a1 := account.NewAccount(1, 100, currency)
 	a2 := account.NewAccount(1, 250, currency)
 	err := s.InsertAccount(a1)
@@ -47,7 +47,7 @@ func TestGetSpecificAccountByAccountIdentifier(t *testing.T) {
 	t.Parallel()
 
 	s := storage.NewMemoryRepository()
-	currency := *money.GetCurrency("BRL")
+	currency := *money.GetCurrency(storage.BrazilianCurrencyCode)
 	accountIdentifier := account.Identifier(2)
 	a := account.NewAccount(accountIdentifier, 100, currency)
 	err := s.InsertAccount(a)
@@ -75,7 +75,7 @@ func TestGetAllAccountsInsertedInMemoryRepository(t *testing.T) {
 	t.Parallel()
 
 	s := storage.NewMemoryRepository()
-	currency := *money.GetCurrency("BRL")
+	currency := *money.GetCurrency(storage.BrazilianCurrencyCode)
 	a1 := account.NewAccount(1, 100, currency)
 	err := s.InsertAccount(a1)
 	require.NoError(t, err)
@@ -94,7 +94,7 @@ func TestCleanDataUsingMemoryRepository(t *testing.T) {
 	t.Parallel()
 
 	s := storage.NewMemoryRepository()
-	currency := *money.GetCurrency("BRL")
+	currency := *money.GetCurrency(storage.BrazilianCurrencyCode)
 	a1 := account.NewAccount(1, 100, currency)
 	err := s.InsertAccount(a1)
 	require.NoError(t, err)

@@ -2,7 +2,7 @@ package application
 
 import (
 	"cautious-octo-pancake/application/dto"
-	"cautious-octo-pancake/internal/bank/storage"
+	"cautious-octo-pancake/internal/account_handler/storage"
 	"cautious-octo-pancake/pkg/account"
 	"net/http"
 )
@@ -34,7 +34,7 @@ func (a *Application) handleDepositEvent(w http.ResponseWriter, e *dto.Event) {
 	if done {
 		return
 	}
-	acc, err := a.Bank.GetAccount(account.Identifier(accountID))
+	acc, err := a.AccountHandler.GetAccount(account.Identifier(accountID))
 	if err != nil {
 		if err == storage.ErrAccountNotFound {
 			a.openAccountWithInitialBalance(w, accountID, *e)
@@ -52,7 +52,7 @@ func (a *Application) handleWithdrawEvent(w http.ResponseWriter, e *dto.Event) {
 	if done {
 		return
 	}
-	acc, err := a.Bank.GetAccount(account.Identifier(accountID))
+	acc, err := a.AccountHandler.GetAccount(account.Identifier(accountID))
 	if err != nil {
 		if err == storage.ErrAccountNotFound {
 			respondWithTextValue(w, http.StatusNotFound, 0)
@@ -75,7 +75,7 @@ func (a *Application) handleTransferEvent(w http.ResponseWriter, e *dto.Event) {
 	if done {
 		return
 	}
-	originAccount, err := a.Bank.GetAccount(account.Identifier(accountIdentifierOrigin))
+	originAccount, err := a.AccountHandler.GetAccount(account.Identifier(accountIdentifierOrigin))
 	if err != nil {
 		if err == storage.ErrAccountNotFound {
 			respondWithTextValue(w, http.StatusNotFound, 0)
@@ -85,10 +85,10 @@ func (a *Application) handleTransferEvent(w http.ResponseWriter, e *dto.Event) {
 		return
 	}
 
-	destinationAccount, err := a.Bank.GetAccount(account.Identifier(accountIdentifierDestination))
+	destinationAccount, err := a.AccountHandler.GetAccount(account.Identifier(accountIdentifierDestination))
 	if err != nil {
 		if err == storage.ErrAccountNotFound {
-			destinationAccount, err = a.Bank.OpenAccount(account.Identifier(accountIdentifierDestination), 0)
+			destinationAccount, err = a.AccountHandler.OpenAccount(account.Identifier(accountIdentifierDestination), 0)
 			if err != nil {
 				respondWithError(w, http.StatusInternalServerError, "unable to open destination account")
 				return
@@ -99,7 +99,7 @@ func (a *Application) handleTransferEvent(w http.ResponseWriter, e *dto.Event) {
 		}
 	}
 
-	if err := a.Bank.Transfer(originAccount, destinationAccount, e.Amount); err != nil {
+	if err := a.AccountHandler.Transfer(originAccount, destinationAccount, e.Amount); err != nil {
 		respondWithError(w, http.StatusInternalServerError, "unable to transfer amount from existing account")
 		return
 	}
@@ -118,7 +118,7 @@ func (a *Application) handleTransferEvent(w http.ResponseWriter, e *dto.Event) {
 }
 
 func (a *Application) openAccountWithInitialBalance(w http.ResponseWriter, accountID int, e dto.Event) {
-	openedAccount, err := a.Bank.OpenAccount(account.Identifier(accountID), e.Amount)
+	openedAccount, err := a.AccountHandler.OpenAccount(account.Identifier(accountID), e.Amount)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "unable to open account")
 		return
@@ -132,7 +132,7 @@ func (a *Application) openAccountWithInitialBalance(w http.ResponseWriter, accou
 }
 
 func (a *Application) accountDeposit(w http.ResponseWriter, acc *account.Account, e dto.Event) {
-	if err := a.Bank.AccountDeposit(acc, e.Amount); err != nil {
+	if err := a.AccountHandler.AccountDeposit(acc, e.Amount); err != nil {
 		respondWithError(w, http.StatusInternalServerError, "unable to deposit in the account")
 		return
 	}
@@ -144,7 +144,7 @@ func (a *Application) accountDeposit(w http.ResponseWriter, acc *account.Account
 }
 
 func (a *Application) accountWithdraw(w http.ResponseWriter, acc *account.Account, e dto.Event) {
-	if err := a.Bank.AccountWithdraw(acc, e.Amount); err != nil {
+	if err := a.AccountHandler.AccountWithdraw(acc, e.Amount); err != nil {
 		respondWithError(w, http.StatusInternalServerError, "unable to withdraw from account")
 		return
 	}

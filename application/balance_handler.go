@@ -1,7 +1,7 @@
 package application
 
 import (
-	"cautious-octo-pancake/internal/bank/storage"
+	"cautious-octo-pancake/internal/account_handler/storage"
 	"cautious-octo-pancake/pkg/account"
 	"net/http"
 )
@@ -18,7 +18,7 @@ func (a *Application) BalanceHandler(w http.ResponseWriter, r *http.Request){
 		return
 	}
 
-	accountRequested, err := a.Bank.GetAccount(account.Identifier(id))
+	accountRequested, err := a.AccountHandler.GetAccount(account.Identifier(id))
 	if err != nil {
 		if err == storage.ErrAccountNotFound {
 			respondWithTextValue(w, http.StatusNotFound, 0)
