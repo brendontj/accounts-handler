@@ -3,6 +3,7 @@ package application
 import (
 	"cautious-octo-pancake/application/dto"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
 )
@@ -37,9 +38,9 @@ func respondWithError(w http.ResponseWriter, code int, message string) {
 }
 
 func respondWithTextValue(w http.ResponseWriter, code int, value interface{}) {
-	w.Header().Set("Content-Type", "plain/text")
+	w.Header().Set("Content-Type", "text/plain")
 	w.WriteHeader(code)
-	_ = json.NewEncoder(w).Encode(value)
+	_ , _ = w.Write([]byte(fmt.Sprintf("%v", value)))
 }
 
 func respondWithJSON(w http.ResponseWriter, code int, payload interface{}) {
