@@ -4,10 +4,7 @@ import (
 	"cautious-octo-pancake/application/dto"
 	"cautious-octo-pancake/internal/bank/storage"
 	"cautious-octo-pancake/pkg/account"
-	"encoding/json"
-	"fmt"
 	"net/http"
-	"strconv"
 )
 
 func (a *Application) EventHandler(w http.ResponseWriter, r *http.Request){
@@ -22,31 +19,102 @@ func (a *Application) EventHandler(w http.ResponseWriter, r *http.Request){
 
 	switch e.EventType {
 	case EventTypeDeposit:
-		accountID, done := transformAccountIdentifier(w, e.Destination)
-		if done {
-			return
-		}
-		acc, err := a.Bank.GetAccount(account.Identifier(accountID))
-		if err != nil {
-			if err == storage.ErrAccountNotFound {
-				a.openAccountWithInitialBalance(w, accountID, *e)
-				return
-			}
-			respondWithError(w, http.StatusInternalServerError, "Unable to get account with informed identifier")
-			return
-		}
-		a.accountDeposit(w, acc, *e)
-		return
-
+		a.handleDepositEvent(w, e)
 	case EventTypeTransfer:
-		panic("implement me")
+		a.handleTransferEvent(w, e)
 	case EventTypeWithdraw:
-		panic("implement me")
+		a.handleWithdrawEvent(w, e)
 	default:
-		respondWithError(w, http.StatusBadRequest, "Event type not implemented")
+		respondWithError(w, http.StatusBadRequest, "event type not implemented")
+	}
+}
+
+func (a *Application) handleDepositEvent(w http.ResponseWriter, e *dto.Event) {
+	accountID, done := transformAccountIdentifier(w, *e.Destination)
+	if done {
+		return
+	}
+	acc, err := a.Bank.GetAccount(account.Identifier(accountID))
+	if err != nil {
+		if err == storage.ErrAccountNotFound {
+			a.openAccountWithInitialBalance(w, accountID, *e)
+			return
+		}
+		respondWithError(w, http.StatusInternalServerError, "unable to get account with informed identifier")
 		return
 	}
 
+	a.accountDeposit(w, acc, *e)
+}
+
+func (a *Application) handleWithdrawEvent(w http.ResponseWriter, e *dto.Event) {
+	accountID, done := transformAccountIdentifier(w, *e.Origin)
+	if done {
+		return
+	}
+	acc, err := a.Bank.GetAccount(account.Identifier(accountID))
+	if err != nil {
+		if err == storage.ErrAccountNotFound {
+			respondWithTextValue(w, http.StatusNotFound, 0)
+			return
+		}
+		respondWithError(w, http.StatusInternalServerError, "unable to get account with informed identifier")
+		return
+	}
+
+	a.accountWithdraw(w, acc, *e)
+}
+
+func (a *Application) handleTransferEvent(w http.ResponseWriter, e *dto.Event) {
+	accountIdentifierOrigin, done := transformAccountIdentifier(w, *e.Origin)
+	if done {
+		return
+	}
+
+	accountIdentifierDestination, done := transformAccountIdentifier(w, *e.Destination)
+	if done {
+		return
+	}
+	originAccount, err := a.Bank.GetAccount(account.Identifier(accountIdentifierOrigin))
+	if err != nil {
+		if err == storage.ErrAccountNotFound {
+			respondWithTextValue(w, http.StatusNotFound, 0)
+			return
+		}
+		respondWithError(w, http.StatusInternalServerError, "unable to get account with informed identifier")
+		return
+	}
+
+	destinationAccount, err := a.Bank.GetAccount(account.Identifier(accountIdentifierDestination))
+	if err != nil {
+		if err == storage.ErrAccountNotFound {
+			destinationAccount, err = a.Bank.OpenAccount(account.Identifier(accountIdentifierDestination), 0)
+			if err != nil {
+				respondWithError(w, http.StatusInternalServerError, "unable to open destination account")
+				return
+			}
+		} else {
+			respondWithError(w, http.StatusInternalServerError, "unable to get account with informed identifier")
+			return
+		}
+	}
+
+	if err := a.Bank.Transfer(originAccount, destinationAccount, e.Amount); err != nil {
+		respondWithError(w, http.StatusInternalServerError, "unable to transfer amount from existing account")
+		return
+	}
+
+	respondWithJSON(w, http.StatusCreated,
+		dto.Response{
+			Origin: &dto.AccountResponse{
+				ID:      originAccount.ID().String(),
+				Balance: originAccount.Balance(),
+			},
+			Destination: &dto.AccountResponse{
+				ID:      destinationAccount.ID().String(),
+				Balance: destinationAccount.Balance(),
+			},
+		})
 }
 
 func (a *Application) openAccountWithInitialBalance(w http.ResponseWriter, accountID int, e dto.Event) {
@@ -75,21 +143,14 @@ func (a *Application) accountDeposit(w http.ResponseWriter, acc *account.Account
 		Origin: nil})
 }
 
-func transformAccountIdentifier(w http.ResponseWriter, identifier interface {}) (int, bool) {
-	accountID, err := strconv.Atoi(fmt.Sprintf("%v", identifier))
-	if err != nil {
-		respondWithError(w, http.StatusBadRequest, "account identifier needs to be a number")
-		return 0, true
+func (a *Application) accountWithdraw(w http.ResponseWriter, acc *account.Account, e dto.Event) {
+	if err := a.Bank.AccountWithdraw(acc, e.Amount); err != nil {
+		respondWithError(w, http.StatusInternalServerError, "unable to withdraw from account")
+		return
 	}
-	return accountID, false
-}
-
-func decodeRequestBody(w http.ResponseWriter, r *http.Request) (*dto.Event, bool) {
-	var e dto.Event
-	decoder := json.NewDecoder(r.Body)
-	if err := decoder.Decode(&e); err != nil {
-		respondWithError(w, http.StatusBadRequest, "Invalid request payload")
-		return nil, true
-	}
-	return &e, false
+	respondWithJSON(w, http.StatusCreated, dto.Response{Origin: &dto.AccountResponse{
+		ID:      acc.ID().String(),
+		Balance: acc.Balance(),
+	},
+		Destination: nil})
 }

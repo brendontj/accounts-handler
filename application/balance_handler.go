@@ -4,7 +4,6 @@ import (
 	"cautious-octo-pancake/internal/bank/storage"
 	"cautious-octo-pancake/pkg/account"
 	"net/http"
-	"strconv"
 )
 
 func (a *Application) BalanceHandler(w http.ResponseWriter, r *http.Request){
@@ -14,9 +13,8 @@ func (a *Application) BalanceHandler(w http.ResponseWriter, r *http.Request){
 		return
 	}
 
-	id, err := strconv.Atoi(accountID)
-	if err != nil {
-		respondWithError(w, http.StatusBadRequest, "account_id needs to be an integer number")
+	id, done := transformAccountIdentifier(w, accountID)
+	if done {
 		return
 	}
 
@@ -26,7 +24,7 @@ func (a *Application) BalanceHandler(w http.ResponseWriter, r *http.Request){
 			respondWithTextValue(w, http.StatusNotFound, 0)
 			return
 		}
-		respondWithError(w, http.StatusInternalServerError, err.Error())
+		respondWithError(w, http.StatusInternalServerError, "unable to get account with informed identifier")
 		return
 	}
 

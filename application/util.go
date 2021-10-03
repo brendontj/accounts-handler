@@ -1,8 +1,10 @@
 package application
 
 import (
+	"cautious-octo-pancake/application/dto"
 	"encoding/json"
 	"net/http"
+	"strconv"
 )
 
 const (
@@ -10,6 +12,25 @@ const (
 	EventTypeWithdraw = "withdraw"
 	EventTypeTransfer = "transfer"
 )
+
+func transformAccountIdentifier(w http.ResponseWriter, identifier string) (int, bool) {
+	accountID, err := strconv.Atoi(identifier)
+	if err != nil {
+		respondWithError(w, http.StatusBadRequest, "account identifier needs to be a number")
+		return 0, true
+	}
+	return accountID, false
+}
+
+func decodeRequestBody(w http.ResponseWriter, r *http.Request) (*dto.Event, bool) {
+	var e dto.Event
+	decoder := json.NewDecoder(r.Body)
+	if err := decoder.Decode(&e); err != nil {
+		respondWithError(w, http.StatusBadRequest, "invalid request payload")
+		return nil, true
+	}
+	return &e, false
+}
 
 func respondWithError(w http.ResponseWriter, code int, message string) {
 	respondWithJSON(w, code, map[string]string{"error": message})
