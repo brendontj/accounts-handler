@@ -1,6 +1,7 @@
-package storage
+package database
 
 import (
+	"cautious-octo-pancake/internal/account/storage"
 	"cautious-octo-pancake/pkg/account"
 	"fmt"
 )
@@ -9,7 +10,7 @@ type memoryRepository struct {
 	accounts []*account.Account
 }
 
-func NewMemoryRepository() Repository {
+func NewMemoryRepository() storage.Repository {
 	return &memoryRepository{accounts: make([]*account.Account, 0)}
 }
 

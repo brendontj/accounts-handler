@@ -1,4 +1,4 @@
-package account_handler
+package account
 
 import "errors"
 

@@ -5,5 +5,5 @@ Accounts Handler is a GoLang project that offers common domain structures to the
 ## Usage
 
 ```bash
-go run cmd/api/accounts_handler.go
+go run cmd/application/accounts_handler.go
 ```

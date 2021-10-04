@@ -1,8 +1,8 @@
-package account_handler_test
+package account_service_test
 
 import (
-	"cautious-octo-pancake/internal/account_handler"
-	"cautious-octo-pancake/internal/account_handler/storage"
+	account2 "cautious-octo-pancake/internal/account"
+	"cautious-octo-pancake/internal/database"
 	"cautious-octo-pancake/pkg/account"
 	"fmt"
 	"github.com/stretchr/testify/assert"
@@ -13,8 +13,8 @@ import (
 func TestOpenAccount(t *testing.T) {
 	t.Parallel()
 
-	s:= storage.NewMemoryRepository()
-	accountHandler := account_handler.NewAccountHandler(s)
+	s:= database.NewMemoryRepository()
+	accountHandler := account2.NewAccountHandler(s)
 	accountIdentifier := account.Identifier(1)
 
 	openedAccount, err := accountHandler.OpenAccount(accountIdentifier, 1000)
@@ -28,8 +28,8 @@ func TestOpenAccount(t *testing.T) {
 func TestOpenAccountWithTheSameIDFromAnExistingAccount(t *testing.T) {
 	t.Parallel()
 
-	memoryRepository := storage.NewMemoryRepository()
-	accountHandler := account_handler.NewAccountHandler(memoryRepository)
+	memoryRepository := database.NewMemoryRepository()
+	accountHandler := account2.NewAccountHandler(memoryRepository)
 	accountIdentifier := account.Identifier(1)
 	_, err := accountHandler.OpenAccount(accountIdentifier, 1000)
 	require.NoError(t, err)
@@ -45,8 +45,8 @@ func TestOpenAccountWithTheSameIDFromAnExistingAccount(t *testing.T) {
 func TestTransferBetweenAccounts(t *testing.T) {
 	t.Parallel()
 
-	memoryRepository := storage.NewMemoryRepository()
-	accountHandler := account_handler.NewAccountHandler(memoryRepository)
+	memoryRepository := database.NewMemoryRepository()
+	accountHandler := account2.NewAccountHandler(memoryRepository)
 	firstAccount, err := accountHandler.OpenAccount(1, 1000)
 	require.NoError(t, err)
 	secondAccount, err := accountHandler.OpenAccount(2, 2000)
@@ -62,8 +62,8 @@ func TestTransferBetweenAccounts(t *testing.T) {
 func TestTransferNegativeAmountBetweenAccounts(t *testing.T) {
 	t.Parallel()
 
-	memoryRepository := storage.NewMemoryRepository()
-	accountHandler := account_handler.NewAccountHandler(memoryRepository)
+	memoryRepository := database.NewMemoryRepository()
+	accountHandler := account2.NewAccountHandler(memoryRepository)
 	firstAccount, err := accountHandler.OpenAccount(1, 1000)
 	require.NoError(t, err)
 	secondAccount, err := accountHandler.OpenAccount(2, 2000)
@@ -71,14 +71,14 @@ func TestTransferNegativeAmountBetweenAccounts(t *testing.T) {
 
 	err = accountHandler.Transfer(firstAccount, secondAccount, -1)
 	require.NotNil(t, err)
-	require.ErrorIs(t, err, account_handler.ErrAmountLessThanMinimumWithdrawAmount)
+	require.ErrorIs(t, err, account2.ErrAmountLessThanMinimumWithdrawAmount)
 }
 
 func TestWithdrawFromAnExistingAccount(t *testing.T) {
 	t.Parallel()
 
-	memoryRepository := storage.NewMemoryRepository()
-	accountHandler := account_handler.NewAccountHandler(memoryRepository)
+	memoryRepository := database.NewMemoryRepository()
+	accountHandler := account2.NewAccountHandler(memoryRepository)
 	existingAccount, err := accountHandler.OpenAccount(1, 1000)
 	require.NoError(t, err)
 
@@ -91,22 +91,22 @@ func TestWithdrawFromAnExistingAccount(t *testing.T) {
 func TestWithdrawLessThanMinimumAllowedAmount(t *testing.T) {
 	t.Parallel()
 
-	memoryRepository := storage.NewMemoryRepository()
-	accountHandler := account_handler.NewAccountHandler(memoryRepository)
+	memoryRepository := database.NewMemoryRepository()
+	accountHandler := account2.NewAccountHandler(memoryRepository)
 	acc, err := accountHandler.OpenAccount(1, 1000)
 	require.NoError(t, err)
 
-	err = accountHandler.AccountWithdraw(acc, account_handler.MinimumWithdrawAmount - 1)
+	err = accountHandler.AccountWithdraw(acc, account2.MinimumWithdrawAmount- 1)
 
 	assert.NotNil(t, err)
-	assert.ErrorIs(t, err, account_handler.ErrAmountLessThanMinimumWithdrawAmount)
+	assert.ErrorIs(t, err, account2.ErrAmountLessThanMinimumWithdrawAmount)
 }
 
 func TestDepositFromAnExistingAccount(t *testing.T) {
 	t.Parallel()
 
-	memoryRepository := storage.NewMemoryRepository()
-	accountHandler := account_handler.NewAccountHandler(memoryRepository)
+	memoryRepository := database.NewMemoryRepository()
+	accountHandler := account2.NewAccountHandler(memoryRepository)
 	existingAccount, err := accountHandler.OpenAccount(1, 1000)
 	require.NoError(t, err)
 
@@ -119,13 +119,13 @@ func TestDepositFromAnExistingAccount(t *testing.T) {
 func TestDepositLessThanMinimumAllowedAmount(t *testing.T) {
 	t.Parallel()
 
-	memoryRepository := storage.NewMemoryRepository()
-	accountHandler := account_handler.NewAccountHandler(memoryRepository)
+	memoryRepository := database.NewMemoryRepository()
+	accountHandler := account2.NewAccountHandler(memoryRepository)
 	acc, err := accountHandler.OpenAccount(1, 1000)
 	require.NoError(t, err)
 
-	err = accountHandler.AccountDeposit(acc, account_handler.MinimumDepositAmount - 1)
+	err = accountHandler.AccountDeposit(acc, account2.MinimumDepositAmount- 1)
 
 	assert.NotNil(t, err)
-	assert.ErrorIs(t, err, account_handler.ErrAmountLessThanMinimumDepositAmount)
+	assert.ErrorIs(t, err, account2.ErrAmountLessThanMinimumDepositAmount)
 }

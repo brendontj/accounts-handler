@@ -1,7 +1,7 @@
 package memory_storage_test
 
 import (
-	"cautious-octo-pancake/internal/account_handler/storage"
+	"cautious-octo-pancake/internal/database"
 	"cautious-octo-pancake/pkg/account"
 	"fmt"
 	"github.com/Rhymond/go-money"
@@ -13,8 +13,8 @@ import (
 func TestInsertAccountInMemoryRepository(t *testing.T) {
 	t.Parallel()
 
-	s := storage.NewMemoryRepository()
-	currency := *money.GetCurrency(storage.BrazilianCurrencyCode)
+	s := database.NewMemoryRepository()
+	currency := *money.GetCurrency(database.BrazilianCurrencyCode)
 	a := account.NewAccount(1, 100, currency)
 
 	err := s.InsertAccount(a)
@@ -29,8 +29,8 @@ func TestInsertAccountInMemoryRepository(t *testing.T) {
 func TestInsertAccountDuplicatedInMemoryRepository(t *testing.T) {
 	t.Parallel()
 
-	s := storage.NewMemoryRepository()
-	currency := *money.GetCurrency(storage.BrazilianCurrencyCode)
+	s := database.NewMemoryRepository()
+	currency := *money.GetCurrency(database.BrazilianCurrencyCode)
 	a1 := account.NewAccount(1, 100, currency)
 	a2 := account.NewAccount(1, 250, currency)
 	err := s.InsertAccount(a1)
@@ -46,8 +46,8 @@ func TestInsertAccountDuplicatedInMemoryRepository(t *testing.T) {
 func TestGetSpecificAccountByAccountIdentifier(t *testing.T) {
 	t.Parallel()
 
-	s := storage.NewMemoryRepository()
-	currency := *money.GetCurrency(storage.BrazilianCurrencyCode)
+	s := database.NewMemoryRepository()
+	currency := *money.GetCurrency(database.BrazilianCurrencyCode)
 	accountIdentifier := account.Identifier(2)
 	a := account.NewAccount(accountIdentifier, 100, currency)
 	err := s.InsertAccount(a)
@@ -62,20 +62,20 @@ func TestGetSpecificAccountByAccountIdentifier(t *testing.T) {
 func TestGetAccountAndGetErrorAccountNotFound(t *testing.T) {
 	t.Parallel()
 
-	s := storage.NewMemoryRepository()
+	s := database.NewMemoryRepository()
 
 	a, err := s.GetAccount(account.Identifier(1))
 
 	require.Nil(t, a)
 	require.NotNil(t, err)
-	require.EqualError(t, err, storage.ErrAccountNotFound.Error())
+	require.EqualError(t, err, database.ErrAccountNotFound.Error())
 }
 
 func TestGetAllAccountsInsertedInMemoryRepository(t *testing.T) {
 	t.Parallel()
 
-	s := storage.NewMemoryRepository()
-	currency := *money.GetCurrency(storage.BrazilianCurrencyCode)
+	s := database.NewMemoryRepository()
+	currency := *money.GetCurrency(database.BrazilianCurrencyCode)
 	a1 := account.NewAccount(1, 100, currency)
 	err := s.InsertAccount(a1)
 	require.NoError(t, err)
@@ -93,8 +93,8 @@ func TestGetAllAccountsInsertedInMemoryRepository(t *testing.T) {
 func TestCleanDataUsingMemoryRepository(t *testing.T) {
 	t.Parallel()
 
-	s := storage.NewMemoryRepository()
-	currency := *money.GetCurrency(storage.BrazilianCurrencyCode)
+	s := database.NewMemoryRepository()
+	currency := *money.GetCurrency(database.BrazilianCurrencyCode)
 	a1 := account.NewAccount(1, 100, currency)
 	err := s.InsertAccount(a1)
 	require.NoError(t, err)

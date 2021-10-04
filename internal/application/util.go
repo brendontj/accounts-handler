@@ -1,7 +1,7 @@
 package application
 
 import (
-	"cautious-octo-pancake/application/dto"
+	"cautious-octo-pancake/internal/application/dto"
 	"encoding/json"
 	"fmt"
 	"net/http"

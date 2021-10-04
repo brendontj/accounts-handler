@@ -1,12 +1,12 @@
 package application
 
 import (
-	"cautious-octo-pancake/internal/account_handler/storage"
+	"cautious-octo-pancake/internal/database"
 	"cautious-octo-pancake/pkg/account"
 	"net/http"
 )
 
-func (a *Application) BalanceHandler(w http.ResponseWriter, r *http.Request){
+func (a *Api) BalanceHandler(w http.ResponseWriter, r *http.Request){
 	accountID := r.URL.Query().Get("account_id")
 	if accountID == "" {
 		respondWithError(w, http.StatusBadRequest, "account_id query parameter value not found")
@@ -18,9 +18,9 @@ func (a *Application) BalanceHandler(w http.ResponseWriter, r *http.Request){
 		return
 	}
 
-	accountRequested, err := a.AccountHandler.GetAccount(account.Identifier(id))
+	accountRequested, err := a.Service.GetAccount(account.Identifier(id))
 	if err != nil {
-		if err == storage.ErrAccountNotFound {
+		if err == database.ErrAccountNotFound {
 			respondWithTextValue(w, http.StatusNotFound, 0)
 			return
 		}
